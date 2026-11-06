@@ -1,0 +1,2 @@
+const g=require('./_lib');
+module.exports=async(req,res)=>{if(req.method!=='GET')return g.json(res,405,{error:'Método no permitido'});try{const [models,variants]=await Promise.all([g.records('Modelos'),g.records('Variantes')]);res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=300');return res.status(200).json({items:g.publicItems(models,variants),source:'sheets'})}catch(e){g.fail(res,e)}};
