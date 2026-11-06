@@ -39,6 +39,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/catalogo-web/
           git diff --cached --quiet && exit 0
-          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push --dry-run https://github.com/${{ github.repository }}.git HEAD:develop
           git commit -m "assets(develop): add 141 optimized GLOD catalog images"
-          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push https://github.com/${{ github.repository }}.git HEAD:develop
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$AUTH_HEADER" fetch https://github.com/${{ github.repository }}.git develop
+          git rebase FETCH_HEAD
+          git -c http.extraheader="$AUTH_HEADER" push https://github.com/${{ github.repository }}.git HEAD:develop
