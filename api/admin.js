@@ -25,7 +25,14 @@ const type=req.body?.type==='Modelos'?'Modelos':req.body?.type==='Variantes'?'Va
 let rows=await g.records(type),input=req.body?.record||{},id=String(input.id||req.body?.id||'');let existing=rows.find(r=>r.id===id),item;
 if(action==='save'){item=normalize({...existing,...input},type);if(rows.some(x=>x.id!==item.id&&(type==='Modelos'?x.codigo===item.codigo:x.sku===item.sku)))return g.json(res,409,{error:'El código ya existe'});if(type==='Variantes'){const mods=await g.records('Modelos');if(!mods.some(m=>m.codigo===item.modelo))return g.json(res,400,{error:'El modelo seleccionado no existe'})}}
 else{if(!existing)return g.json(res,404,{error:'Producto no encontrado'});item={...existing,activo:action==='archive'?'archivado':g.active(existing.activo)?'false':'true',actualizado:new Date().toISOString()};delete item._row}
-await g.writeRecord(type,item,existing?existing._row:null);return g.json(res,200,{ok:true,item})
+await g.writeRecord(type,item,existing?existing._row:null);
+if(type==='Modelos'&&action==='save'&&existing&&existing.codigo!==item.codigo){
+ const linked=await g.records('Variantes');
+ for(const variant of linked.filter(v=>v.modelo===existing.codigo)){
+  await g.writeRecord('Variantes',{...variant,modelo:item.codigo,actualizado:new Date().toISOString()},variant._row);
+ }
+}
+return g.json(res,200,{ok:true,item})
 }
 return g.json(res,404,{error:'Acción desconocida'})
 }catch(e){g.fail(res,e)}};
