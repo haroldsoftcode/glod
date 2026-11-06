@@ -1,0 +1,44 @@
+name: Build GLOD web catalog assets
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "scripts/build_catalog_web.py"
+      - ".github/workflows/catalog-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  catalog-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: develop
+          persist-credentials: false
+      - name: Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install image dependencies
+        run: python -m pip install Pillow==11.1.0
+      - name: Generate 141 local WebP images
+        run: python scripts/build_catalog_web.py
+      - name: Check all assets generated
+        run: |
+          test "$(find assets/catalogo-web -name 'M??-??.webp' | wc -l)" -eq 141
+      - name: Commit generated image assets to develop
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "GLOD catalog automation"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/catalogo-web/
+          git diff --cached --quiet && exit 0
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push --dry-run https://github.com/${{ github.repository }}.git HEAD:develop
+          git commit -m "assets(develop): add 141 optimized GLOD catalog images"
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push https://github.com/${{ github.repository }}.git HEAD:develop
