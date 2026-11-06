@@ -3,7 +3,7 @@
 Preserves product proportions and never changes source files on Google Drive.
 """
 import io, json, re, time, pathlib, urllib.request, urllib.error, sys
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageChops
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 html = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -18,9 +18,7 @@ ok, errors = [], []
 for n, item in enumerate(catalog, 1):
     sku = item["sku"]
     target = out / (sku + ".webp")
-    if target.exists():
-        ok.append(sku)
-        continue
+    # Always rebuild from the original source: existing WebP files may contain stale beige backgrounds.
     src = item["imagen"]
     image_id = re.search(r'[?&]id=([^&]+)', src)
     urls = []
@@ -54,30 +52,31 @@ for n, item in enumerate(catalog, 1):
     # The caption/color-chip band occupies the bottom ~14% of the frontal plate.
     # Exclude that band before fitting the original bag image to the canvas.
     photo = image.crop((0, 0, w, round(h * 0.85)))
+    # Only replace bright, low-chroma plate pixels. Do not alter darker leather,
+    # saturated colorways, stitching or metallic hardware.
+    def whiten_plate_background(img):
+        img = img.convert("RGB")
+        red, green, blue = img.split()
+        r = red.point(lambda v: 255 if v >= 228 else 0)
+        g = green.point(lambda v: 255 if v >= 220 else 0)
+        b = blue.point(lambda v: 255 if v >= 207 else 0)
+        chroma_rb = ImageChops.subtract(red, blue).point(lambda v: 255 if v <= 37 else 0)
+        chroma_gb = ImageChops.subtract(green, blue).point(lambda v: 255 if v <= 30 else 0)
+        mask = ImageChops.multiply(ImageChops.multiply(r, g), ImageChops.multiply(b, ImageChops.multiply(chroma_rb, chroma_gb)))
+        img.paste((255, 255, 255), (0, 0, img.width, img.height), mask)
+        return img
+
+    photo = whiten_plate_background(photo)
     canvas = Image.new("RGB", (1000, 1000), "#ffffff")
     fitted = ImageOps.contain(photo, (920, 920), Image.Resampling.LANCZOS)
     canvas.paste(fitted, ((1000 - fitted.width) // 2, (1000 - fitted.height) // 2))
-    canvas.save(target, "WEBP", quality=84, method=5)
+    canvas = whiten_plate_background(canvas)
+    canvas.save(target, "WEBP", quality=92, method=6)
     ok.append(sku)
     if n % 20 == 0:
         print(f"Completed {n}/{len(catalog)}", flush=True)
 
-# Normalize near-white neutral photographic and canvas backgrounds to pure white.
-# Only neutral highlights are affected: colored leather, stitching and hardware stay intact.
-from PIL import ImageChops
-
-for target in sorted(out.glob("M??-??.webp")):
-    image = Image.open(target).convert("RGB")
-    red, green, blue = image.split()
-    white_r = red.point(lambda v: 255 if v >= 240 else 0)
-    white_g = green.point(lambda v: 255 if v >= 237 else 0)
-    white_b = blue.point(lambda v: 255 if v >= 232 else 0)
-    neutral = ImageChops.subtract(red, blue).point(lambda v: 255 if v <= 19 else 0)
-    mask = ImageChops.multiply(ImageChops.multiply(white_r, white_g), ImageChops.multiply(white_b, neutral))
-    image.paste((255, 255, 255), (0, 0, image.width, image.height), mask)
-    image.save(target, "WEBP", quality=91, method=5)
-
-report = {"total":len(catalog),"generated":len(ok),"failed":errors}
+report = {"total":len(catalog),"generated":len(ok),"failed":errors,"background":"white","regenerated":True}
 (out / "manifest.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
 print(json.dumps(report,ensure_ascii=False), flush=True)
 if errors:
