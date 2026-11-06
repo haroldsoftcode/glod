@@ -1,5 +1,7 @@
 {
   "total": 141,
   "generated": 141,
-  "failed": []
+  "failed": [],
+  "background": "white",
+  "regenerated": true
 }
