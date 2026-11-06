@@ -49,3 +49,16 @@ No reutilizar claves enviadas en un chat: usa una clave nueva y única.
 - El modelo se puede archivar con todas sus variantes sin borrarlas.
 - Google Drive no es CDN; el proxy por Vercel es apropiado para una tienda pequena, pero a escala alta conviene mover las miniaturas a almacenamiento/CDN.
 - No almacenar nunca claves o tokens de servicio en archivos publicos, JavaScript del navegador, ni GitHub.
+
+## Recursos Google creados
+
+- Hoja nativa GLOD (30 modelos y 141 variantes YA importados): https://docs.google.com/spreadsheets/d/1V_kPobuj6aSpH4tNQiB0VKmASygHu2qUqUXyZExD5hI/edit
+- Carpeta de originales en Drive: https://drive.google.com/drive/folders/1vw5PNydql9U3PSwlJbPBaTeLtJmiQ3z6
+- GLOD_SHEET_ID = 1V_kPobuj6aSpH4tNQiB0VKmASygHu2qUqUXyZExD5hI
+- GLOD_DRIVE_FOLDER_ID = 1vw5PNydql9U3PSwlJbPBaTeLtJmiQ3z6
+
+No volver a ejecutar la importación inicial: los registros ya están en la hoja creada.
+
+IMPORTANTE: las cuentas de servicio de Google pueden no tener cuota de almacenamiento para subir imágenes a carpetas de My Drive aunque estén compartidas. Si falla la carga, utilizar una unidad compartida habilitada o implementar carga OAuth del propietario o un almacenamiento alternativo para archivos. La subida Drive aún requiere pruebas reales.
+
+Se debe crear una cuenta de servicio de Google Cloud habilitada para Sheets y Drive, compartirle la hoja y la carpeta, y configurar las credenciales exclusivas de Preview en Vercel. No subir claves a GitHub ni pegarlas en el chat.
