@@ -1,7 +1,7 @@
 const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
-const g=require('./_lib');
+const g=require('../lib/glod');
 const maxJson=4*1024*1024;
 function passwordValid(p){const value=process.env.GLOD_ADMIN_PASSWORD_SCRYPT||'';const [salt,expected]=value.split(':');if(!salt||!expected)return false;const actual=crypto.scryptSync(p,salt,64).toString('hex');return expected.length===actual.length&&crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(actual))}
 function cookie(res,value,maxAge=0){res.setHeader('Set-Cookie','glod_admin='+value+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age='+maxAge)}
