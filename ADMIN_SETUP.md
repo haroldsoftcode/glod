@@ -42,3 +42,20 @@ Hasta entonces el catálogo sirve las imágenes por Vercel y sigue operativo.
 - La API pública `/api/catalog` consulta Supabase PostgREST sin secretos.
 - El panel usa Supabase Auth y REST con la clave publishable.
 - No es necesario configurar Google Cloud, Sheets ni `.env` del administrador anterior.
+
+
+## Seguridad del panel (develop, 14 de noviembre de 2026)
+
+El panel de administración consume exclusivamente `/api/admin` (Vercel Functions). El código HTML/JS no lleva clave de Supabase, dirección del proyecto, correo de un administrador ni tokens. El endpoint público `/api/catalog` también usa variables de entorno del servidor.
+
+**Configuración obligatoria en Vercel, entorno Preview (rama develop):**
+- `SUPABASE_URL`: dirección HTTPS del proyecto Supabase (sin barra final).
+- `SUPABASE_PUBLISHABLE_KEY`: clave pública publishable; guardada como variable de entorno no prefijada por `NEXT_PUBLIC_` ni `VITE_`.
+
+Agregar estas variables directamente en Vercel, nunca en archivos versionados o commits. Configurar variables equivalentes para Production solamente antes de aprobar un release de `main`. Las funciones responden 503 si falta configuración, en vez de publicar un valor incrustado.
+
+La API usa sesiones `HttpOnly; Secure; SameSite=Strict`, origen comprobado para operaciones POST, validación de identificadores, campos y fotos, autorización de usuario mediante Supabase Auth y registro en `glod_admins`, y RLS de PostgreSQL. No utiliza `service_role`. El borrado definitivo requiere confirmación visual. Los modelos con variantes vinculadas se protegen mediante FK `ON DELETE RESTRICT`. El estado activo/inactivo se gestiona por separado del borrado. La autenticación contra Supabase Auth conserva las medidas de limitación de intentos del proveedor; esta versión no implementa un rate limiter distribuido adicional.
+
+**Verificación antes de publicación:** configurar variables de entorno y generar un Preview de Vercel; comprobar login, expiración de sesión, cierre de sesión, filtros, CRUD, subida de archivo y rechazo de borrado de modelos con variantes. No fusionar con `main` hasta completar estas pruebas.
+
+Las claves publishable no son claves secretas, aunque conviene rotarlas si existe alguna política interna de higiene de credenciales. Una vez que una cadena aparece en un commit público, borrar su aparición del archivo actual no elimina automáticamente el historial Git.
