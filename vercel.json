@@ -1,12 +1,24 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/adm",
-      "destination": "/adm/index.html"
+      "destination": "/admin",
+      "permanent": false
     },
     {
       "source": "/adm/",
-      "destination": "/adm/index.html"
+      "destination": "/admin",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin/index.html"
     }
   ]
 }
