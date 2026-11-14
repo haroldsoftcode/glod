@@ -1,64 +1,44 @@
-# GLOD /adm — configuracion (solo develop)
+# GLOD · Supabase + GitHub + Vercel
 
-La version publica actual de GLOD permanece en **main**. Este panel solamente se prepara en **develop**.
+## Arquitectura vigente
+- Tienda pública: `/`.
+- Panel independiente: `/admin`, sin enlace en navegación pública.
+- Fuente de datos: Supabase PostgreSQL (`glod_models`, `glod_variants`).
+- Autenticación: Supabase Auth, con autorización mediante `glod_admins`.
+- Fotos iniciales: 141 archivos WebP optimizados servidos desde `/assets/catalogo-web/` en GitHub/Vercel.
+- Fotos nuevas: bucket público `glod-catalog` de Supabase Storage, con escritura restringida por RLS a administradores.
+- Google Drive: respaldo histórico de originales; no se consulta desde el sitio.
+- Google Sheets y Google Cloud API: retirados del sitio y panel.
 
-## Arquitectura
-- Google Sheets es la fuente de verdad: pestañas 'Modelos' y 'Variantes'.
-- Google Drive guarda fotos cargadas desde el administrador en una carpeta privada compartida con la cuenta de servicio.
-- Vercel sirve APIs protegidas, y el catalogo publico consulta '/api/catalog'. Mientras no haya Google configurado, la web conserva su JSON estatico.
-- Login del administrador: nombre y clave definidos exclusivamente mediante variables de entorno; nunca hardcodeados en GitHub.
-- La administracion se encuentra en '/adm'; no se agrega al nav.
-- Archivar conserva registro y lo excluye del catalogo; no borra irreversiblemente datos ni fotos.
+## Supabase
+Organización: glod.bags (Free)
+Proyecto: glod-bags
+Ref: inkzqdtkealzzcujeyqa
 
-## Preparacion en Google
-1. Crear una Google Sheet vacia (no hace falta crear manualmente las pestañas).
-2. Crear carpeta de fotos en Google Drive.
-3. En Google Cloud, activar **Google Sheets API** y **Google Drive API**, y crear una cuenta de servicio con permisos limitados.
-4. Compartir la Sheet y la carpeta con el correo de la cuenta de servicio, permiso editor.
-5. Configurar las variables de entorno en Vercel Preview (solo develop inicialmente):
+Migrados: 30 modelos y 141 variantes, con SKU, color, HEX, precios detal/mayor y fotografía original de referencia.
+El usuario inicial de Supabase Auth ya está autorizado en `glod_admins`.
+No insertar otros usuarios automáticamente: cada nuevo administrador requiere aprobación y asignación manual.
 
-- GLOD_SHEET_ID = ID de la hoja, no su URL.
-- GLOD_DRIVE_FOLDER_ID = ID de la carpeta compartida.
-- GOOGLE_SERVICE_ACCOUNT_EMAIL = correo de la cuenta de servicio.
-- GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = clave PEM privada de la cuenta de servicio; no poner en Git.
-- GLOD_ADMIN_USERNAME = nombre de usuario administrativo.
-- GLOD_ADMIN_PASSWORD_SCRYPT = salt:hash obtenido usando el comando de abajo.
-- GLOD_SESSION_SECRET = secreto aleatorio minimo 32 bytes generado de forma segura.
+## Administración
+1. Abrir `https://<dominio>/admin`.
+2. Iniciar sesión con **correo electrónico** y contraseña registrados en Supabase Auth.
+3. Consultar, crear, editar, activar o desactivar productos. Los cambios se guardan en Supabase.
+4. Para subir nuevas imágenes: formulario de producto -> fotografía -> Guardar. Las imágenes nuevas se guardan en Supabase Storage.
 
-Generar hash de contrasena localmente (NO imprimir contraseña en logs, no guardar en archivos):
-node -e "const c=require('crypto'), p=process.env.GLOD_NEW_ADMIN_PASSWORD, s=c.randomBytes(16).toString('hex');if(!p)throw Error('Defina GLOD_NEW_ADMIN_PASSWORD localmente');console.log(s+':'+c.scryptSync(p,s,64).toString('hex'))"
+No utilizar el antiguo usuario de `.env` de Sheets; el inicio de sesión usa correo/contraseña de Supabase Auth.
 
-Generar secreto de cookie:
-node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+## Imágenes iniciales
+Las 141 fotografías WebP ya existen en GitHub en `assets/catalogo-web/` y se muestran sin depender de Google.
+PENDIENTE: copiar físicamente esas fotografías iniciales al bucket `glod-catalog`. No confundir la migración de la metadata SQL (completada) con la migración de bytes al Storage (pendiente).
+Hasta entonces el catálogo sirve las imágenes por Vercel y sigue operativo.
 
-No reutilizar claves enviadas en un chat: usa una clave nueva y única.
+## Seguridad
+- La clave pública `sb_publishable_...` puede incluirse en código frontend; no es la clave `service_role`.
+- Nunca incluir service_role, secretos, contraseñas o claves privadas en GitHub.
+- PostgreSQL y Storage con RLS; el permiso admin está basado en `glod_admins`, no solo en estar autenticado.
+- Permisos en `glod_admins` se asignan de forma manual.
 
-## Primera ejecucion
-1. Abrir el deployment Preview develop '/adm' e iniciar sesion.
-2. Pulsar "Importar catalogo inicial" **una sola vez** (30 modelos y 141 variantes).
-3. Comprobar registros, precios, chips y toggles.
-4. Subir imagen desde formulario de variante. Se guardara en la carpeta Drive; la imagen en la web se cargara a traves de '/api/image?id=...'.
-5. Cualquier modificacion guardada en Sheets se publica al recargar el catalogo; API cache de 60 segundos en CDN.
-
-## Funcionamiento y limitaciones
-- El API de Google **no usa** credenciales del usuario final; utiliza cuenta de servicio en backend.
-- La subida JSON base64 soporta archivos maximo 3 MB por foto; Vercel limita el tamano de peticiones serverless. Las fotos originales se mantienen en Drive.
-- Los productos existentes siguen visibles aun si Sheets esta sin configurar, gracias al JSON incluido en index.html.
-- Si Sheets falla tras inicializar, se usa el catalogo estatico anterior como respaldo temporal. Para un lanzamiento definitivo conviene monitoreo, versiones publicadas y backups de Sheets.
-- Un SKU/ID existente no debe usarse como identificador inmutable; cada registro lleva UUID propio.
-- El modelo se puede archivar con todas sus variantes sin borrarlas.
-- Google Drive no es CDN; el proxy por Vercel es apropiado para una tienda pequena, pero a escala alta conviene mover las miniaturas a almacenamiento/CDN.
-- No almacenar nunca claves o tokens de servicio en archivos publicos, JavaScript del navegador, ni GitHub.
-
-## Recursos Google creados
-
-- Hoja nativa GLOD (30 modelos y 141 variantes YA importados): https://docs.google.com/spreadsheets/d/1V_kPobuj6aSpH4tNQiB0VKmASygHu2qUqUXyZExD5hI/edit
-- Carpeta de originales en Drive: https://drive.google.com/drive/folders/1vw5PNydql9U3PSwlJbPBaTeLtJmiQ3z6
-- GLOD_SHEET_ID = 1V_kPobuj6aSpH4tNQiB0VKmASygHu2qUqUXyZExD5hI
-- GLOD_DRIVE_FOLDER_ID = 1vw5PNydql9U3PSwlJbPBaTeLtJmiQ3z6
-
-No volver a ejecutar la importación inicial: los registros ya están en la hoja creada.
-
-IMPORTANTE: las cuentas de servicio de Google pueden no tener cuota de almacenamiento para subir imágenes a carpetas de My Drive aunque estén compartidas. Si falla la carga, utilizar una unidad compartida habilitada o implementar carga OAuth del propietario o un almacenamiento alternativo para archivos. La subida Drive aún requiere pruebas reales.
-
-Se debe crear una cuenta de servicio de Google Cloud habilitada para Sheets y Drive, compartirle la hoja y la carpeta, y configurar las credenciales exclusivas de Preview en Vercel. No subir claves a GitHub ni pegarlas en el chat.
+## Nota para Vercel
+- La API pública `/api/catalog` consulta Supabase PostgREST sin secretos.
+- El panel usa Supabase Auth y REST con la clave publishable.
+- No es necesario configurar Google Cloud, Sheets ni `.env` del administrador anterior.
