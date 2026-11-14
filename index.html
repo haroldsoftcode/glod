@@ -353,11 +353,36 @@ html {scroll-behavior:smooth}
  .catalog-socials .social-icon {width:35px}
  .catalog-socials .social-whatsapp,.catalog-socials .social-catalog {padding:0 9px}
 }
+
+/* Brand refinement: avatar | divider | GLOD signature, responsive */
+.catalog-profile-identity{display:flex;align-items:center;flex:0 0 auto;gap:15px;min-width:0}
+.catalog-profile-divider{display:block;width:1px;height:70px;flex:0 0 1px;background:linear-gradient(to bottom,rgba(90,24,154,.12),rgba(90,24,154,.56) 50%,rgba(90,24,154,.12))}
+.catalog-profile-logo{display:block;width:90px;height:80px;object-fit:contain;flex:0 0 90px}
+.catalog-profile-main{gap:22px}
+@media(max-width:1140px){
+ .catalog-profile-main{width:100%}
+}
+@media(max-width:700px){
+ .catalog-profile-main{gap:12px}
+ .catalog-profile-identity{gap:8px}
+ .catalog-profile-divider{height:44px}
+ .catalog-profile-logo{width:55px;height:60px;flex-basis:55px}
+}
+@media(max-width:370px){
+ .catalog-profile-main{gap:8px}
+ .catalog-profile-identity{gap:6px}
+ .catalog-profile-divider{height:37px}
+ .catalog-profile-logo{width:45px;height:52px;flex-basis:45px}
+}
 </style></head>
 <body>
 <section class="section" id="catalogo"><div class="catalog-profile" aria-label="Presentación de GLOD y sus redes">
   <div class="catalog-profile-main">
-    <div class="catalog-avatar"><img src="/assets/glod-avatar.webp" width="144" height="144" decoding="async" fetchpriority="high" alt="Modelo de GLOD" /></div>
+    <div class="catalog-profile-identity">
+      <div class="catalog-avatar"><img src="/assets/glod-avatar.webp" width="144" height="144" decoding="async" fetchpriority="high" alt="Modelo de GLOD" /></div>
+      <span class="catalog-profile-divider" aria-hidden="true"></span>
+      <img class="catalog-profile-logo" src="/assets/glod-panel-logo-violet.svg" width="91" height="69" decoding="async" alt="GLOD">
+    </div>
     <div class="catalog-profile-copy">
       <h1>Encuentra tu <em>favorita.</em></h1>
       <p>Explora nuestros modelos, elige tu color y compra directamente por WhatsApp.</p>
@@ -370,9 +395,7 @@ html {scroll-behavior:smooth}
     <a class="social-action social-icon" href="https://www.instagram.com/glod.bags/" target="_blank" rel="noopener noreferrer" aria-label="GLOD en Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".9" fill="currentColor" stroke="none"/></svg></a>
     <a class="social-action social-icon" href="https://www.tiktok.com/@glod.bags" target="_blank" rel="noopener noreferrer" aria-label="GLOD en TikTok" title="TikTok"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.8 2h-3.1v13.1a3.1 3.1 0 1 1-2.8-3.1V8.8a6.3 6.3 0 1 0 6.1 6.3V8.3a8.1 8.1 0 0 0 4.1 1.3V6.4A4.9 4.9 0 0 1 16.8 2Z"/></svg></a>
     <a class="social-action social-icon" href="https://web.facebook.com/profile.php?id=61594141584617" target="_blank" rel="noopener noreferrer" aria-label="GLOD en Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 21v-8h2.7l.4-3.2H14V7.9c0-.9.3-1.6 1.6-1.6h1.6V3.5c-.3 0-1.3-.1-2.5-.1-2.6 0-4.4 1.6-4.4 4.5v1.9H7.5V13h2.8v8H14Z"/></svg></a>
-    <a class="social-action social-catalog" href="#productos" aria-label="Ir al catálogo de carteras" title="Ver catálogo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l1 12H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg><span>Catálogo</span>
-    </a>
+    
   </div>
 </div><div class="tools" role="search" aria-label="Buscar y filtrar carteras"><label class="filter-field filter-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" aria-label="Buscar" placeholder="Buscar por código, nombre o color…"></label><label class="filter-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg><select id="m" aria-label="Filtrar por modelo"><option value="">Todos los modelos</option></select></label><label class="filter-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7 6"/></svg><select id="c" aria-label="Filtrar por color"><option value="">Todos los colores</option></select></label><label class="filter-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20V4m-3 3 3-3 3 3m10-3v16m-3-3 3 3 3-3"/></svg><select id="o" aria-label="Ordenar"><option value="sku">Por código</option><option value="pasc">Menor precio</option><option value="pdesc">Mayor precio</option></select></label></div>
 <p id="results" class="results"></p><div id="productos"><div class="grid" id="grid"></div></div><div class="empty" id="empty" hidden>No se encontraron carteras con esos filtros.</div><nav id="pagination" class="pagination" aria-label="Páginas del catálogo"></nav></section>
