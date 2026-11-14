@@ -11,7 +11,7 @@ const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>
 const SB_URL='https://inkzqdtkealzzcujeyqa.supabase.co',SB_KEY='sb_publishable_7DzuTqjxIOF1JX7yNNkvCw_1t_K8q_6';
 let glodToken=sessionStorage.getItem('glod_admin_access')||'';
 async function sb(path,{method='GET',data,headers={}}={}){
- const r=await fetch(SB_URL+path,{method,headers:{'apikey':SB_KEY,'authorization':'Bearer '+(glodToken||SB_KEY),'accept':'application/json',...(data===undefined?{}:{'content-type':'application/json'}),...headers},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
+ const r=await fetch(SB_URL+path,{method,headers:{'apikey':SB_KEY,...(glodToken?{'authorization':'Bearer '+glodToken}:{}),'accept':'application/json',...(data===undefined?{}:{'content-type':'application/json'}),...headers},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
  const value=await r.json().catch(()=>({}));
  if(!r.ok)throw Error(value.msg||value.message||value.error_description||value.error||'Error de Supabase ('+r.status+')');
  return value;
