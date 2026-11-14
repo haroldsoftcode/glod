@@ -6,9 +6,38 @@ const AT='__Host-glod_at',RT='__Host-glod_rt';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MIMES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
 function problem(status,message){const e=new Error(message);e.status=status;throw e}
+function readEnv(names) {
+ return names.map(name => {
+  const raw=process.env[name];
+  if(typeof raw!=='string')return '';
+  let value=raw.trim();
+  if(value.length>1&&((value.startsWith('"')&&value.endsWith('"'))||(value.startsWith("'")&&value.endsWith("'"))))value=value.slice(1,-1).trim();
+  return value;
+ }).filter(Boolean);
+}
+function validProjectUrl(value) {
+ try {
+  const url=new URL(value);
+  return url.protocol==='https:'&&/^[a-z0-9-]+\.supabase\.co$/i.test(url.hostname)&&
+    (url.pathname==='/'||!url.pathname)&&!url.search&&!url.hash;
+ } catch {return false}
+}
+function validReadKey(value) {
+ if(/^sb_publishable_[A-Za-z0-9_-]+$/.test(value))return true;
+ try {
+  const parts=value.split('.');
+  if(parts.length!==3)return false;
+  const payload=JSON.parse(Buffer.from(parts[1],'base64url').toString('utf8'));
+  return payload.role==='anon'&&payload.iss==='supabase';
+ } catch {return false}
+}
+const URL_ENV=['SUPABASE_URL','SUPABASE_PROJECT_URL','NEXT_PUBLIC_SUPABASE_URL','VITE_SUPABASE_URL'];
+const KEY_ENV=['SUPABASE_PUBLISHABLE_KEY','SUPABASE_ANON_KEY','SUPABASE_PUBLIC_KEY','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','NEXT_PUBLIC_SUPABASE_ANON_KEY','VITE_SUPABASE_ANON_KEY'];
 function setup(){
- const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_PUBLISHABLE_KEY;
- if(!url||!/^https:\/\/[a-z0-9.-]+\.supabase\.co\/?$/i.test(url)||!key||!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key))problem(503,'Administración no configurada: faltan variables de entorno en Vercel.');
+ const urls=readEnv(URL_ENV), keys=readEnv(KEY_ENV);
+ const url=urls.find(validProjectUrl),key=keys.find(validReadKey);
+ if(!url)problem(503,urls.length?'La URL de Supabase es inválida. Revisa la URL HTTPS del proyecto en Vercel.':'SUPABASE_URL no está disponible en este despliegue. Verifica Production y realiza Redeploy.');
+ if(!key)problem(503,keys.length?'La clave Supabase debe ser de tipo publishable o anon; no secret ni service_role.':'SUPABASE_PUBLISHABLE_KEY no está disponible en este despliegue. Verifica Production y realiza Redeploy.');
  return {url:url.replace(/\/$/,''),key};
 }
 function cookies(req){
